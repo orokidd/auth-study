@@ -5,6 +5,7 @@ const { Pool } = require("pg");
 const session = require("express-session");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
+const bcrypt = require("bcryptjs");
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -38,7 +39,8 @@ app.get("/sign-up", (req, res) => {
 
 app.post("/sign-up", async (req, res, next) => {
   try {
-    await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [req.body.username, req.body.password]);
+    const hashedPassword = await bcrypt.hash(req.body.password, 10); // Hash password before input to database
+    await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [req.body.username, hashedPassword]);
     res.redirect("/");
   } catch (err) {
     return next(err);
@@ -73,7 +75,8 @@ passport.use(
         return done(null, false, { message: "Incorrect username" });
       }
 
-      if (user.password !== password) {
+      const passwordMatch = await bcrypt.compare(password, user.password); // Hash the password from user input then compares it to the password in database
+      if (!passwordMatch) {
         return done(null, false, { message: "Incorrect password" });
       }
 
