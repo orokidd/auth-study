@@ -84,12 +84,12 @@ passport.use(
   })
 );
 
-// Serialize the user object to user.id and send it as cookie to browser
+// Serialize the user object to an id and sends it as cookie to browser
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
-// Browser sends the id to express which to access the user object and then runs the rest of the application
+// Browser sends the id to express which then used to access the user object and then runs the rest of the application with that user object
 passport.deserializeUser(async (id, done) => {
   try {
     const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
